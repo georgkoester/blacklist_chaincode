@@ -35,12 +35,13 @@ func main() {
 }
 
 func (t *BlacklistChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	logger.Debugf("Blacklist Init()")
-
 	_, args := stub.GetFunctionAndParameters()
+	logger.Debugf("Blacklist Init(%s)", args)
 
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of argumens. Expecting 1 name for the blacklist to create.")
+		return shim.Error(
+			fmt.Sprintf("Incorrect number of arguments. " +
+				"Expecting 1 name for the blacklist to create. Got: %s", args))
 	}
 
 	blacklistName := args[0]
