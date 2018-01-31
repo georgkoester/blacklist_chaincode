@@ -25,6 +25,11 @@ type BlacklistEntry struct {
 	// here information like a signature if additional level of user management for example is required
 }
 
+type BlacklistUpdateEvent struct {
+	ObjectType string `json:"objectType"`
+	Value      string `json:"value"`
+}
+
 type BlacklistChaincode struct {
 }
 
@@ -120,7 +125,27 @@ func (t *BlacklistChaincode) add(stub shim.ChaincodeStubInterface, args []string
 		return shim.Error("Could not add entry: Failure to write to chain")
 	}
 
+	t.sendUpdateEvent(stub, objectType, blacklistValue)
+
 	return shim.Success(nil)
+}
+
+func (t *BlacklistChaincode) sendUpdateEvent(stub shim.ChaincodeStubInterface, objectType string, blacklistValue string) error {
+	eventContent := BlacklistUpdateEvent{ObjectType: objectType, Value: blacklistValue}
+
+	eventBytes, err := json.Marshal(eventContent)
+	if err != nil {
+		logger.Errorf("Could not send update event for %s:%s reason: Json marshalling failed: %s",
+			objectType, blacklistValue, err)
+		return err
+	}
+
+	if err := stub.SetEvent("update", eventBytes); err != nil {
+		logger.Errorf("Could not send update event for %s:%s reason: %s", objectType, blacklistValue, err)
+		return err
+	}
+
+	return nil
 }
 
 func (t *BlacklistChaincode) remove(stub shim.ChaincodeStubInterface, args []string) pb.Response {
@@ -141,6 +166,8 @@ func (t *BlacklistChaincode) remove(stub shim.ChaincodeStubInterface, args []str
 		logger.Errorf("DelState failed in remove: %s", delErr)
 		return shim.Error("Could not remove entry: Failure to write to chain")
 	}
+
+	t.sendUpdateEvent(stub, objectType, blacklistValue)
 
 	return shim.Success(nil)
 }
