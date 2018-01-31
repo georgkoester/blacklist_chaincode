@@ -150,3 +150,20 @@ func TestBlacklist_AddCount(t *testing.T) {
 	checkInvoke(t, stub, CountEntriesResult{Count:1, HasMore: false}, "count", "email", "name1@test.test")
 
 }
+
+func TestBlacklist_AddCountRemove(t *testing.T) {
+	blacklist := new(BlacklistChaincode)
+	stub := shim.NewMockStub("blacklist", blacklist)
+
+	// Init
+	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testlist"))
+
+	checkInvoke(t, stub, nil, "add", "email", "name1@test.test")
+
+	checkInvoke(t, stub, CountEntriesResult{Count:1, HasMore: false}, "count", "email", "name1@test.test")
+
+	checkInvoke(t, stub, nil, "remove", "email", "name1@test.test")
+
+	checkInvoke(t, stub, CountEntriesResult{Count:0, HasMore: false}, "count", "email", "name1@test.test")
+
+}

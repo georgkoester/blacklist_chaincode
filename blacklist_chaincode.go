@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"errors"
 	"encoding/json"
 	"encoding/base64"
 
@@ -85,6 +86,8 @@ func (t *BlacklistChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respons
 		return t.add(stub, args)
 	case "count":
 		return t.countEntries(stub, args)
+	case "remove":
+		return t.remove(stub, args)
 	default:
 		return shim.Error("Unknown method")
 	}
@@ -98,20 +101,10 @@ func (t *BlacklistChaincode) add(stub shim.ChaincodeStubInterface, args []string
 	objectType := args[0]
 	blacklistValue := args[1]
 
-	creatorBytes, err := stub.GetCreator()
+	entryKey, err := createCompositeEntryKey(stub, objectType, blacklistValue)
 	if err != nil {
-		logger.Warning("Creator unavailable")
-		return shim.Error("Creator unavailable")
-	}
-	creatorB64 := base64.StdEncoding.EncodeToString(creatorBytes)
-	if err != nil {
-		logger.Error("Encoding of creator %x failed, %s", creatorBytes, err)
-		return shim.Error("Encoding creator failed")
-	}
-	entryKey, err := stub.CreateCompositeKey(objectType, []string{blacklistValue, creatorB64})
-	if err != nil {
-		logger.Errorf("Creation of composite key of '%s','%s','%s' failed: %s", objectType, blacklistValue, creatorBytes, err)
-		return shim.Error("Creating composite key failed")
+		logger.Error("Cannot add entry:", err)
+		return shim.Error("Cannot add entry, composite key creation failed")
 	}
 
 	entryValue := BlacklistEntry{}
@@ -121,9 +114,54 @@ func (t *BlacklistChaincode) add(stub shim.ChaincodeStubInterface, args []string
 		return shim.Error("Marshalling of entry failed")
 	}
 
-	stub.PutState(entryKey, entryValueBytes)
+	putErr := stub.PutState(entryKey, entryValueBytes)
+	if putErr != nil {
+		logger.Errorf("PutState failed in add: %s", putErr)
+		return shim.Error("Could not add entry: Failure to write to chain")
+	}
 
 	return shim.Success(nil)
+}
+
+func (t *BlacklistChaincode) remove(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Needs 2 args: type, value")
+	}
+	objectType := args[0]
+	blacklistValue := args[1]
+
+	entryKey, err := createCompositeEntryKey(stub, objectType, blacklistValue)
+	if err != nil {
+		logger.Error("Cannot add entry:", err)
+		return shim.Error("Cannot add entry, composite key creation failed")
+	}
+
+	delErr := stub.DelState(entryKey)
+	if delErr != nil {
+		logger.Errorf("DelState failed in remove: %s", delErr)
+		return shim.Error("Could not remove entry: Failure to write to chain")
+	}
+
+	return shim.Success(nil)
+}
+
+func createCompositeEntryKey(stub shim.ChaincodeStubInterface, objectType string, blacklistValue string) (string, error) {
+	creatorBytes, err := stub.GetCreator()
+	if err != nil {
+		logger.Errorf("Creator unavailable: %s", err)
+		return "", errors.New("Creator unavailable")
+	}
+	creatorB64 := base64.StdEncoding.EncodeToString(creatorBytes)
+	if err != nil {
+		logger.Errorf("Encoding of creator %x failed, %s", creatorBytes, err)
+		return "", errors.New("Encoding creator failed")
+	}
+	entryKey, err := stub.CreateCompositeKey(objectType, []string{blacklistValue, creatorB64})
+	if err != nil {
+		logger.Errorf("Creation of composite key of '%s','%s','%s' failed: %s", objectType, blacklistValue, creatorBytes, err)
+		return "", errors.New("Creating composite key failed")
+	}
+	return entryKey, nil
 }
 
 type CountEntriesResult struct {
