@@ -55,6 +55,12 @@ Network, a chaincode environment, and the connection to the CLI container.
 
 11. To test a higher count add more peers and invoke the add method from them for jon@doe.name ...
 
+12. Shutting down the development environment cleanly, so you can restart it later (otherwise the CLI container won't come up'):
+
+ ```
+ docker-compose -f docker-compose-simple.yaml down
+ ```
+
 ## FAQ and trouble shooting
 
 - __Where do I find documentation on shim commands?__ Check out the `interfaces_stable.go` file, e.g. in the
@@ -62,10 +68,11 @@ fabric github: [interface_stable.go on master branch](https://github.com/hyperle
 Be aware that hyperledger is under heavy development, so you might want to switch to the tagged version, e.g.
 [interfaces.go version 1.0.5, selected from interfaces_stable and interfaces_experimental](https://github.com/hyperledger/fabric/blob/v1.0.5/core/chaincode/shim/interfaces.go).
 
-- __I cannot connect to the CLI docker container:__ I CTRL+C the docker-compose process and `docker rm` `cli`,
-`chaincode`, `orderer`, and `peer`. Then docker-compose up again. Now you might have to reinstall and reinstantiate,
+- __I cannot connect to the CLI docker container:__ Shut down cleanly with `docker-compose -f docker-compose-simple.yaml down`
+instead of just CTRL+C. Otherwise try `docker rm` `cli`, `chaincode`, `orderer`, and `peer`.
+Then docker-compose up should work again. Now you might have to reinstall and reinstantiate,
 depending on if you also cleaned the directory of files. I suggest you just use a new chaincode name and
-start over. You don't need to run chaincode containers for old chaincodes.
+start over. You don't need to run chaincode containers for unused chaincodes (they'll then be unavailable).
 
 - __I cannot reinstall the chaincode:__ Chaincodes need to be installed either with a new name (`-n`) or
 new version (`-v`).
