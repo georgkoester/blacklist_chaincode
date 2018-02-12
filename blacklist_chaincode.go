@@ -22,7 +22,8 @@ type BlacklistRootEntry struct {
 
 // chaincode entry for a single blacklist listing, this could hold additional information with regards to the entry
 type BlacklistEntry struct {
-	// here information like a signature if additional level of user management for example is required
+	// here entry-specific information can be added. For example you might implement an additional level
+	// of security and add the signature in here. This might be required if not every user will be a hyperledger user
 }
 
 type BlacklistUpdateEvent struct {
