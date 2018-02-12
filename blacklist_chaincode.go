@@ -41,44 +41,56 @@ func main() {
 	}
 }
 
+// Init is being executed during initial setup and also for an upgrade transaction
 func (t *BlacklistChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	_, args := stub.GetFunctionAndParameters()
-	logger.Debugf("Blacklist Init(%s)", args)
+	logger.Debugf("Blacklist Init(%s) called", args)
 
-	if len(args) != 1 {
-		return shim.Error(
-			fmt.Sprintf("Incorrect number of arguments. " +
-				"Expecting 1 name for the blacklist to create. Got: %s", args))
-	}
-
-	blacklistName := args[0]
-
-	blacklistContent, err := stub.GetState(blacklistName);
+	blacklistContent, err := stub.GetState("root");
 	if err != nil {
 		logger.Errorf("GetState error in Init: %s", err)
 		return shim.Error("Failed to get state, check log")
 	}
+
 	if blacklistContent != nil {
-		return shim.Error("Failed to create: Blacklist already exists")
-	}
+		// Upgrade!
+		oldRoot := BlacklistRootEntry{};
+		err := json.Unmarshal(blacklistContent, &oldRoot)
+		if err != nil {
+			logger.Errorf("Unmarshalling error in Init during upgrade: %s", err)
+			return shim.Error("Failed to get upgrade, check log")
+		}
+		logger.Infof("Upgrade of chaincode for blacklist named '%s' finished", oldRoot.Name)
 
-	timestamp, err := getTimestampString(stub)
-	if err != nil {
-		logger.Errorf("Timestamp error: %s", err)
-		return shim.Error("Failed to get timestamp")
-	}
+	} else {
+		// Init!
+		if len(args) != 1 {
+			return shim.Error(
+				fmt.Sprintf("Incorrect number of arguments. " +
+				"Expecting 1 name for the blacklist to create. Ignored on upgrade. Got: %s", args))
+		}
 
-	newEntry := &BlacklistRootEntry{
-		Created: timestamp,
-	}
-	newEntry.Name = blacklistName
-	newEntryBytes, err := json.Marshal(newEntry)
-	if err != nil {
-		logger.Errorf("Failed to encode new entry: %s", err)
-		return shim.Error("Failed to encode new entry")
-	}
+		blacklistName := args[0]
 
-	stub.PutState(blacklistName, newEntryBytes)
+		timestamp, err := getTimestampString(stub)
+		if err != nil {
+			logger.Errorf("Timestamp error: %s", err)
+			return shim.Error("Failed to get timestamp")
+		}
+
+		newEntry := &BlacklistRootEntry{
+			Created: timestamp,
+		}
+		newEntry.Name = blacklistName
+		newEntryBytes, err := json.Marshal(newEntry)
+		if err != nil {
+			logger.Errorf("Failed to encode new entry: %s", err)
+			return shim.Error("Failed to encode new entry")
+		}
+
+		stub.PutState("root", newEntryBytes)
+		logger.Infof("Instantiation of chaincode for blacklist named '%s' finished", blacklistName)
+	}
 
 	return shim.Success(nil)
 }

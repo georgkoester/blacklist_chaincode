@@ -32,7 +32,7 @@ Network, a chaincode environment, and the connection to the CLI container.
 7. Install chaincode:
 
  ```
- peer chaincode install -p chaincodedev/chaincode/blacklist_chaincode -n blacklist2 -v 0
+ peer chaincode install -p chaincodedev/chaincode/blacklist_chaincode -n blacklist -v 0
  ```
 
 8. Instantiate one blacklist in channel 'myc' (calls the Init method!):
@@ -55,7 +55,21 @@ Network, a chaincode environment, and the connection to the CLI container.
 
 11. To test a higher count add more peers and invoke the add method from them for jon@doe.name ...
 
-12. Shutting down the development environment cleanly, so you can restart it later (otherwise the CLI container won't come up'):
+12. Upgrading to a newer version: Run the new version, install it on your peer and send upgrade TX.
+Here for upgrade from version 0 to 1:
+ ```
+ <change source>
+ go build
+ CORE_PEER_ADDRESS=peer:7051 CORE_CHAINCODE_ID_NAME=blacklist:1 ./blacklist_chaincode
+ ```
+
+ In peer terminal:
+ ```
+ peer chaincode install -p chaincodedev/chaincode/blacklist_chaincode -n blacklist -v 1
+ peer chaincode upgrade -n blacklist -v 1 -c '{"Args":["init", "not used"]}' -C myc
+ ```
+
+13. Shutting down the development environment cleanly, so you can restart it later (otherwise the CLI container won't come up'):
 
  ```
  docker-compose -f docker-compose-simple.yaml down
