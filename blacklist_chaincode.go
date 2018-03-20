@@ -64,13 +64,12 @@ func (t *BlacklistChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response 
 
 	} else {
 		// Init!
-		if len(args) != 1 {
-			return shim.Error(
-				fmt.Sprintf("Incorrect number of arguments. " +
-				"Expecting 1 name for the blacklist to create. Ignored on upgrade. Got: %s", args))
+		if len(args) > 0 {
+			logger.Infof("Instantiation of chaincode for blacklist got arguments. " +
+				"This is the first: %s", args[0])
+		} else {
+			logger.Infof("Instantiation of chaincode for blacklist got no arguments.")
 		}
-
-		blacklistName := args[0]
 
 		timestamp, err := getTimestampString(stub)
 		if err != nil {
@@ -81,7 +80,18 @@ func (t *BlacklistChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response 
 		newEntry := &BlacklistRootEntry{
 			Created: timestamp,
 		}
+
+		// this shows how an init argument could be used:
+		//if len(args) != 1 {
+		//	return shim.Error(
+		//		fmt.Sprintf("Incorrect number of arguments. " +
+		//		"Expecting 1 name for the blacklist to create. Ignored on upgrade. Got: %s", args))
+		//}
+		//blacklistName := args[0]
+		//newEntry.Name = blacklistName
+		blacklistName := "anonymous"
 		newEntry.Name = blacklistName
+
 		newEntryBytes, err := json.Marshal(newEntry)
 		if err != nil {
 			logger.Errorf("Failed to encode new entry: %s", err)

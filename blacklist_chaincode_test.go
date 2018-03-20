@@ -118,10 +118,21 @@ func TestBlacklist_Init(t *testing.T) {
 	stub := shim.NewMockStub("blacklist", blacklist)
 
 	// Init
-	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testlist"))
+	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testname_ignored_currently"))
 
 	ts, _ := getTimestampString(stub)
-	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "Testlist", Created: ts})
+	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "anonymous", Created: ts})
+}
+
+func TestBlacklist_Init_noargs(t *testing.T) {
+	blacklist := new(BlacklistChaincode)
+	stub := shim.NewMockStub("blacklist", blacklist)
+
+	// Init
+	checkInit(t, stub, makeArgsArrayFromStrings("init"))
+
+	ts, _ := getTimestampString(stub)
+	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "anonymous", Created: ts})
 }
 
 func TestBlacklist_Upgrade(t *testing.T) {
@@ -129,13 +140,13 @@ func TestBlacklist_Upgrade(t *testing.T) {
 	stub := shim.NewMockStub("blacklist", blacklist)
 
 	// Init
-	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testlist"))
+	checkInit(t, stub, makeArgsArrayFromStrings("init"))
 	ts, _ := getTimestampString(stub)
-	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "Testlist", Created: ts})
+	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "anonymous", Created: ts})
 
 	// Upgrade
 	checkInit(t, stub, makeArgsArrayFromStrings("init"))
-	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "Testlist", Created: ts})
+	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "anonymous", Created: ts})
 }
 
 func TestBlacklist_AddCount(t *testing.T) {
@@ -143,10 +154,10 @@ func TestBlacklist_AddCount(t *testing.T) {
 	stub := shim.NewMockStub("blacklist", blacklist)
 
 	// Init
-	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testlist"))
+	checkInit(t, stub, makeArgsArrayFromStrings("init"))
 
 	ts, _ := getTimestampString(stub)
-	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "Testlist", Created: ts})
+	checkStateWithMarshalling(t, stub, "root", BlacklistRootEntry{Name: "anonymous", Created: ts})
 
 	checkInvoke(t, stub, nil, "add", "email", "name1@test.test")
 
@@ -170,7 +181,7 @@ func TestBlacklist_AddCountRemove(t *testing.T) {
 	stub := shim.NewMockStub("blacklist", blacklist)
 
 	// Init
-	checkInit(t, stub, makeArgsArrayFromStrings("init", "Testlist"))
+	checkInit(t, stub, makeArgsArrayFromStrings("init"))
 
 	checkInvoke(t, stub, nil, "add", "email", "name1@test.test")
 
