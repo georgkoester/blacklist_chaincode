@@ -7,7 +7,7 @@ for the same name. E.g. A user might consider jon@doe.name as blacklisted if 2 p
 ## Installation and trial
 
 1. Install docker
-2. Follow [installation of Hyperledger samples](http://hyperledger-fabric.readthedocs.io/en/release/chaincode4ade.html#install-hyperledger-fabric-samples)
+2. Follow [installation of Hyperledger samples](http://hyperledger-fabric.readthedocs.io/en/release-1.0/chaincode4ade.html#install-hyperledger-fabric-samples)
 and start up in three terminals as described:
 Network, a chaincode environment, and the connection to the CLI container.
 3. In the chaincode terminal: `git clone https://github.com/georgkoester/blacklist_chaincode.git`
